@@ -12,7 +12,14 @@ const createUserController = async (req, res) => {
 
     const user = await createUser({ email, password });
     const token = user.generateJWT();
-    res.status(201).json({ user, token });
+    res
+      .status(201)
+      .json({
+        user,
+        token,
+        success: true,
+        message: "User created Successfully",
+      });
   } catch (error) {
     res.status(400).send({ message: error.message });
   }
