@@ -1,17 +1,47 @@
 import React, { useState, useEffect } from "react";
+import axiosInstance from "../config/axios";
 import { useContext, createContext } from "react";
-import axios from "axios";
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
   const baseurl = import.meta.env.VITE_BASE_URL;
+  const [project, setProject] = useState({});
+  const getProjectDetails = async (projectId) => {
+    try {
+      const { data } = await axiosInstance.get(
+        `/projects/getProject/${projectId}`
+      );
+      if (data.success) {
+        setProject(data.project);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to fetch project details");
+    }
+  };
+  const getAllUsers = async () => {
+    try {
+      const { data } = await axiosInstance.get(`/users/getAll`);
+
+      if (data.success) {
+        setAllUsers(data.users);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const value = {
     baseurl,
     user,
     setUser,
+    allUsers,
+    getAllUsers,
+    getProjectDetails,
+    project,
   };
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

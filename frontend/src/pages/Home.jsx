@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderSymlink, Users, Plus, Search } from "lucide-react";
 import { UseUserContext } from "../../context/UserContext";
-
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import axiosInstance from "../../config/axios";
 import {
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/card";
 
 export function Home() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [allProjects, setAllProjects] = useState([]);
@@ -35,7 +36,6 @@ export function Home() {
     try {
       const { data } = await axiosInstance.get(`/projects/getAll`);
       if (data.success) {
-        console.log(data.projects);
         setAllProjects(data.projects);
       }
     } catch (error) {
@@ -155,6 +155,7 @@ export function Home() {
                   variant="ghost"
                   size="sm"
                   className="text-blue-400 hover:text-blue-300 hover:bg-gray-700"
+                  onClick={() => navigate(`/project/${project._id}`)}
                 >
                   View Details
                 </Button>
