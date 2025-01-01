@@ -4,7 +4,7 @@ import { UseUserContext } from "../../context/UserContext";
 import { toast } from "sonner";
 import MessageBox from "@/components/MessageBox";
 import axiosInstance from "../../config/axios";
-
+import { initializeSocket } from "../../config/socket";
 const Project = () => {
   const { projectId } = useParams();
 

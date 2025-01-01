@@ -9,6 +9,16 @@ export const UserProvider = ({ children }) => {
   const [allUsers, setAllUsers] = useState([]);
   const baseurl = import.meta.env.VITE_BASE_URL;
   const [project, setProject] = useState({});
+
+  const getUserDetails = async () => {
+    try {
+      const { data } = await axiosInstance.get("/users/profile");
+      if (data.success) {
+        setUser(data.user);
+      }
+    } catch (error) {}
+  };
+
   const getProjectDetails = async (projectId) => {
     try {
       const { data } = await axiosInstance.get(
@@ -41,6 +51,7 @@ export const UserProvider = ({ children }) => {
     allUsers,
     getAllUsers,
     getProjectDetails,
+    getUserDetails,
     project,
   };
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

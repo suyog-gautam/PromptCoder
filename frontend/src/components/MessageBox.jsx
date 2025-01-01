@@ -7,41 +7,64 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Send } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserList } from "./UserList";
+import {
+  initializeSocket,
+  sendMessage,
+  receiveMessage,
+} from "../../config/socket";
+import { UseUserContext } from "../../context/UserContext";
+import { use } from "react";
 export default function MessageBox(project) {
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Hello!", sender: "other" },
-    { id: 2, text: "Hello everyone!", sender: "Alice" },
-    { id: 3, text: "Welcome to the group chat!", sender: "Alice" },
-    { id: 4, text: "Hi Alice! How are you?", sender: "Bob" },
-    { id: 6, text: "Hey folks, what's up?", sender: "Charlie" },
-    { id: 5, text: "I'm doing great, thanks for asking!", sender: "Alice" },
-    {
-      id: 7,
-      text: "Hello! how are you doin today? iam testing teh length of the message ",
-      sender: "other",
-    },
-    { id: 9, text: "Hi there!", sender: "You" },
-    {
-      id: 8,
-      text: "Hello! how are you doin today? iam testing teh length of the message there!",
-      sender: "You",
-    },
-  ]);
+  const { user, getUserDetails } = UseUserContext();
+  useEffect(() => {
+    getUserDetails();
+  }, []);
+
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
 
   const scrollAreaRef = useRef(null);
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: "smooth", // Smooth scrolling effect
+      });
     }
+  }, [messages]);
+
+  useEffect(() => {
+    if (project?.projects?._id) {
+      const socket = initializeSocket(project.projects._id);
+
+      socket.on("connect_error", (err) => {
+        console.error("Socket connection error:", err);
+      });
+
+      receiveMessage("project-message", (data) => {
+        console.log("Message received:", data);
+        setMessages((prevMessages) => [...prevMessages, data]);
+      });
+
+      return () => {
+        socket.disconnect();
+      };
+    }
+  }, [project?.projects?._id]);
+  useEffect(() => {
+    console.log(messages);
   }, [messages]);
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
-      setMessages([
-        ...messages,
-        { id: messages.length + 1, text: inputMessage, sender: "You" },
-      ]);
+      sendMessage("project-message", {
+        message: inputMessage,
+        sender: user.email,
+      });
       setInputMessage("");
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { message: inputMessage, sender: user.email },
+      ]);
     }
   };
 
@@ -74,39 +97,43 @@ export default function MessageBox(project) {
         </div>
 
         {/* Message List */}
-        <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
-          {messages.map((message, index) => {
-            const isCurrentUser = message.sender === "You"; // Updated to check for "user"
-            const showSender =
-              index === 0 || messages[index - 1].sender !== message.sender;
-            const isConsecutive =
-              index > 0 && messages[index - 1].sender === message.sender;
 
-            return (
-              <div
-                key={message.id}
-                className={`mb-${isConsecutive ? "1" : "4"} ${
-                  isCurrentUser ? "ml-auto text-right" : "text-left"
-                }`}
-              >
-                {showSender && (
-                  <div className="text-sm text-slate-400 mb-1">
-                    {message.sender}
-                  </div>
-                )}
+        <div className="flex-grow p-4 overflow-y-auto" ref={scrollAreaRef}>
+          <ScrollArea>
+            {messages.map((message, index) => {
+              const isCurrentUser =
+                message.sender === user.email ? "You" : null;
+              const showSender =
+                index === 0 || messages[index - 1].sender !== message.sender;
+              const isConsecutive =
+                index > 0 && messages[index - 1].sender === message.sender;
+
+              return (
                 <div
-                  className={`p-2 rounded-lg inline-block max-w-[80%] ${
-                    isCurrentUser
-                      ? "bg-slate-900 text-primary-foreground "
-                      : "bg-secondary text-slate-800"
+                  key={index}
+                  className={`mb-${isConsecutive ? "1" : "4"} ${
+                    isCurrentUser ? "ml-auto text-right" : "text-left"
                   }`}
                 >
-                  {message.text}
+                  {showSender && (
+                    <div className="text-sm text-slate-400 mb-1">
+                      {message.sender}
+                    </div>
+                  )}
+                  <div
+                    className={`p-2 rounded-lg inline-block max-w-[80%] ${
+                      isCurrentUser
+                        ? "bg-slate-900 text-primary-foreground "
+                        : "bg-secondary text-slate-800"
+                    }`}
+                  >
+                    {message.message}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </ScrollArea>
+              );
+            })}
+          </ScrollArea>
+        </div>
 
         {/* Input Area */}
         <div className="p-4 border-t flex space-x-2">
