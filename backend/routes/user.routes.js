@@ -19,4 +19,5 @@ userRouter.post(
 );
 userRouter.get("/profile", authUser, userController.profileController);
 userRouter.get("/logout", authUser, userController.logoutController);
+userRouter.get("/getAll", authUser, userController.getAllUsersController);
 export { userRouter };

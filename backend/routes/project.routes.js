@@ -19,4 +19,9 @@ projectRouter.put(
   authUser,
   projectController.addCollaboratorController
 );
+projectRouter.get(
+  "/getProject/:projectId",
+  authUser,
+  projectController.getProjecByIdController
+);
 export { projectRouter };

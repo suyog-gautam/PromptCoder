@@ -1,6 +1,6 @@
 import { validationResult } from "express-validator";
 import User from "../models/user.model.js";
-import { createUser } from "../services/user.service.js";
+import { createUser, getAllUsers } from "../services/user.service.js";
 import { redisCLient } from "../services/redis.service.js";
 const createUserController = async (req, res) => {
   const errors = validationResult(req);
@@ -12,14 +12,12 @@ const createUserController = async (req, res) => {
 
     const user = await createUser({ email, password });
     const token = user.generateJWT();
-    res
-      .status(201)
-      .json({
-        user,
-        token,
-        success: true,
-        message: "User created Successfully",
-      });
+    res.status(201).json({
+      user,
+      token,
+      success: true,
+      message: "User created Successfully",
+    });
   } catch (error) {
     res.status(400).send({ message: error.message });
   }
@@ -49,7 +47,7 @@ const loginController = async (req, res) => {
 const profileController = async (req, res) => {
   try {
     const user = req.user;
-    res.status(200).json({ user });
+    res.status(200).json({ success: true, user });
   } catch (error) {
     res.status(400).send({ message: error.message });
   }
@@ -67,9 +65,20 @@ const logoutController = async (req, res) => {
     res.status(400).send({ message: error.message });
   }
 };
+const getAllUsersController = async (req, res) => {
+  try {
+    const currentUser = await User.findOne({ email: req.user.email });
+    const userId = currentUser._id;
+    const users = await getAllUsers(userId);
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    res.status(400).send({ message: error.message });
+  }
+};
 export {
   createUserController,
   loginController,
   profileController,
   logoutController,
+  getAllUsersController,
 };

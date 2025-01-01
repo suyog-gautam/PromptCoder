@@ -62,3 +62,16 @@ export const addCollaborator = async ({
 
   return project;
 };
+export const getProjectById = async (projectId, userId) => {
+  const project = await Project.findById(projectId).populate("users");
+  if (!project) {
+    throw new Error("Project not found");
+  }
+  if (
+    !project.users.some((user) => user._id.toString() === userId.toString())
+  ) {
+    throw new Error("You are not authorized to view this project");
+  }
+
+  return project;
+};
