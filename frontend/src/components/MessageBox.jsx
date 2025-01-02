@@ -7,22 +7,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Send } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { UserList } from "./UserList";
+import Markdown from "markdown-to-jsx";
 import {
   initializeSocket,
   sendMessage,
   receiveMessage,
 } from "../../config/socket";
 import { UseUserContext } from "../../context/UserContext";
-import { use } from "react";
+
 export default function MessageBox(project) {
-  const { user, getUserDetails } = UseUserContext();
+  const { user, getUserDetails, getMessages, allMessages } = UseUserContext();
   useEffect(() => {
     getUserDetails();
-  }, []);
+    project.projects._id && getMessages(project.projects._id);
+  }, [project.projects._id]);
 
-  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
-
+  const [messages, setMessages] = useState(allMessages || []);
+  useEffect(() => {
+    if (allMessages && allMessages.length > 0) {
+      setMessages(allMessages);
+    }
+  }, [allMessages]);
   const scrollAreaRef = useRef(null);
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -42,8 +48,17 @@ export default function MessageBox(project) {
       });
 
       receiveMessage("project-message", (data) => {
-        console.log("Message received:", data);
-        setMessages((prevMessages) => [...prevMessages, data]);
+        if (data.sender === "PromptCoder") {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { ...data, isMarkdown: true },
+          ]);
+        } else {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { ...data, isMarkdown: false },
+          ]);
+        }
       });
 
       return () => {
@@ -51,9 +66,7 @@ export default function MessageBox(project) {
       };
     }
   }, [project?.projects?._id]);
-  useEffect(() => {
-    console.log(messages);
-  }, [messages]);
+
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
       sendMessage("project-message", {
@@ -70,7 +83,7 @@ export default function MessageBox(project) {
 
   return (
     project.projects.name && (
-      <div className="fixed left-0 top-0 bottom-0 w-1/5 flex flex-col bg-[#1e2e4b] text-slate-300 border-r">
+      <div className="fixed left-0 top-0 bottom-0 w-1/4 flex flex-col bg-[#1e2e4b] text-slate-300 border-r">
         {/* Header */}
         <div className="p-3 bg-[#090f18] border-b flex justify-between items-center">
           <span className="font-semibold text-slate-100">
@@ -123,11 +136,17 @@ export default function MessageBox(project) {
                   <div
                     className={`p-2 rounded-lg inline-block max-w-[80%] ${
                       isCurrentUser
-                        ? "bg-slate-900 text-primary-foreground "
+                        ? "bg-slate-900 text-primary-foreground"
                         : "bg-secondary text-slate-800"
                     }`}
                   >
-                    {message.message}
+                    {message?.isMarkdown ? (
+                      <div className="overflow-x-auto overflow-y-auto whitespace-pre-wrap bg-transparent">
+                        <Markdown>{message.message}</Markdown>{" "}
+                      </div>
+                    ) : (
+                      message?.message
+                    )}
                   </div>
                 </div>
               );
