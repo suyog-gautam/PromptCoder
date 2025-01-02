@@ -6,6 +6,7 @@ import http from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 import Project from "./models/project.model.js";
+import { generateResult } from "./services/ai.service.js";
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -47,10 +48,38 @@ io.on("connection", (socket) => {
 
   socket.join(socket.roomId);
 
-  socket.on("project-message", (data) => {
-    socket.broadcast.to(socket.roomId).emit("project-message", data);
-  });
+  socket.on("project-message", async (data) => {
+    const message = data.message;
+    const aiIsPresentInMessage = message.includes("@ai");
+    try {
+      const project = await Project.findById(socket.project._id);
 
+      if (project) {
+        const newMessage = {
+          sender: data.sender,
+          message: data.message,
+        };
+
+        project.messages.push(newMessage);
+        await project.save();
+
+        // Broadcast the new message to other clients
+        socket.broadcast.to(socket.roomId).emit("project-message", newMessage);
+        if (aiIsPresentInMessage) {
+          const prompt = message.replace("@ai", "");
+
+          const result = await generateResult(prompt);
+
+          io.to(socket.roomId).emit("project-message", {
+            message: result,
+            sender: "PromptCoder",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error saving message to project:", error);
+    }
+  });
   socket.on("disconnect", () => {
     socket.leave(socket.roomId);
   });

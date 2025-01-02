@@ -24,4 +24,9 @@ projectRouter.get(
   authUser,
   projectController.getProjecByIdController
 );
+projectRouter.get(
+  "/getProjectMessages/:projectId",
+  authUser,
+  projectController.getProjectMessagesController
+);
 export { projectRouter };

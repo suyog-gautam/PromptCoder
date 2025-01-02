@@ -2,10 +2,11 @@ import {
   createProject,
   addCollaborator,
   getProjectById,
+  getProjectMessages,
 } from "../services/project.service.js";
 import Project from "../models/project.model.js";
 import User from "../models/user.model.js";
-import { get } from "mongoose";
+
 export const createProjectController = async (req, res) => {
   const { name } = req.body;
 
@@ -79,6 +80,17 @@ export const getProjecByIdController = async (req, res) => {
     const project = await getProjectById(projectId, userId);
 
     return res.status(200).json({ success: true, project });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+export const getProjectMessagesController = async (req, res) => {
+  const { projectId } = req.params;
+  const currentUser = await User.findOne({ email: req.user.email });
+  const userId = currentUser._id;
+  try {
+    const messages = await getProjectMessages(projectId, userId);
+    return res.status(200).json({ success: true, messages });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

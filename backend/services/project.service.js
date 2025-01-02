@@ -75,3 +75,16 @@ export const getProjectById = async (projectId, userId) => {
 
   return project;
 };
+export const getProjectMessages = async (projectId, userId) => {
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new Error("Project not found");
+  }
+  if (
+    !project.users.some((user) => user._id.toString() === userId.toString())
+  ) {
+    throw new Error("You are not authorized to view messages in this project");
+  }
+  return project.messages;
+};

@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./db/db.js";
 import { userRouter } from "./routes/user.routes.js";
 import { projectRouter } from "./routes/project.routes.js";
+import { aiRouter } from "./routes/ai.routes.js";
 import { redisConnect } from "./services/redis.service.js";
 import cors from "cors";
 connectDB();
@@ -19,5 +20,6 @@ app.use(cookieParser());
 app.use(cors());
 app.use("/users", userRouter);
 app.use("/projects", projectRouter);
+app.use("/ai", aiRouter);
 
 export default app;

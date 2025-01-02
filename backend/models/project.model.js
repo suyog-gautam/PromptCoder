@@ -15,6 +15,20 @@ const projectSchema = new mongoose.Schema({
       ref: "user",
     },
   ],
+  messages: [
+    {
+      sender: {
+        type: String,
+      },
+      message: {
+        type: String,
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
